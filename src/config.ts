@@ -5,6 +5,7 @@ import {
     CurveFillData,
     ERC20BridgeSource,
     FeeSchedule,
+    FillData,
     MultiHopFillData,
     OrderPrunerPermittedFeeTypes,
     RfqtMakerAssetOfferings,
@@ -356,11 +357,23 @@ export const GAS_SCHEDULE_V0: FeeSchedule = {
 const FEE_SCHEDULE_V0: FeeSchedule = Object.assign(
     {},
     ...(Object.keys(GAS_SCHEDULE_V0) as ERC20BridgeSource[]).map(k => ({
-        [k]: fillData => PROTOCOL_FEE_MULTIPLIER.plus(GAS_SCHEDULE_V0[k](fillData)),
+        [k]: (fillData: FillData) => PROTOCOL_FEE_MULTIPLIER.plus(GAS_SCHEDULE_V0[k]!(fillData)),
     })),
 );
 
-export const ASSET_SWAPPER_MARKET_ORDERS_V0_OPTS: Partial<SwapQuoteRequestOpts> = {
+// NOTE: Need to explicitly specify which subset of SwapQuoteRequestOpts this will contain
+type AssetSwapperMarketOrderV0Opts =
+    | 'excludedSources'
+    | 'bridgeSlippage'
+    | 'maxFallbackSlippage'
+    | 'numSamples'
+    | 'sampleDistributionBase'
+    | 'feeSchedule'
+    | 'gasSchedule'
+    | 'shouldBatchBridgeOrders'
+    | 'runLimit'
+    | 'shouldGenerateQuoteReport';
+export const ASSET_SWAPPER_MARKET_ORDERS_V0_OPTS: Pick<SwapQuoteRequestOpts, AssetSwapperMarketOrderV0Opts> = {
     excludedSources: [...EXCLUDED_SOURCES, ERC20BridgeSource.MultiHop],
     bridgeSlippage: DEFAULT_QUOTE_SLIPPAGE_PERCENTAGE,
     maxFallbackSlippage: DEFAULT_FALLBACK_SLIPPAGE_PERCENTAGE,
@@ -429,9 +442,11 @@ export const GAS_SCHEDULE_V1: FeeSchedule = {
         const firstHop = (fillData as MultiHopFillData).firstHopSource;
         const secondHop = (fillData as MultiHopFillData).secondHopSource;
         const firstHopGas =
-            GAS_SCHEDULE_V1[firstHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[firstHop.source](firstHop.fillData);
+            GAS_SCHEDULE_V1[firstHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[firstHop.source]!(firstHop.fillData);
         const secondHopGas =
-            GAS_SCHEDULE_V1[secondHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[secondHop.source](secondHop.fillData);
+            GAS_SCHEDULE_V1[secondHop.source] === undefined
+                ? 0
+                : GAS_SCHEDULE_V1[secondHop.source]!(secondHop.fillData);
         return new BigNumber(firstHopGas).plus(secondHopGas).toNumber();
     },
 };
@@ -441,8 +456,8 @@ const FEE_SCHEDULE_V1: FeeSchedule = Object.assign(
     ...(Object.keys(GAS_SCHEDULE_V1) as ERC20BridgeSource[]).map(k => ({
         [k]:
             k === ERC20BridgeSource.Native
-                ? fillData => PROTOCOL_FEE_MULTIPLIER.plus(GAS_SCHEDULE_V1[k](fillData))
-                : fillData => GAS_SCHEDULE_V1[k](fillData),
+                ? (fillData: FillData) => PROTOCOL_FEE_MULTIPLIER.plus(GAS_SCHEDULE_V1[k]!(fillData))
+                : (fillData: FillData) => GAS_SCHEDULE_V1[k]!(fillData),
     })),
 );
 
@@ -480,7 +495,7 @@ const tokenAdjacencyGraph: TokenAdjacencyGraph = Object.values(TokenMetadatasFor
         ]
             .map(m => m && m.tokenAddress)
             .filter(m => m && m !== tokenKey);
-        acc[tokenKey] = intermediateTokens;
+        acc[tokenKey] = intermediateTokens as string[];
         return acc;
     },
     {},

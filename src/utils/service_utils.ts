@@ -161,7 +161,7 @@ export const serviceUtils = {
         allowedApiKeys: string[],
     ): ERC20BridgeSource[] {
         const isWildcardEnabled = allowedApiKeys.length === 1 && allowedApiKeys[0] === '*';
-        const isAPIKeyEnabled = isWildcardEnabled || allowedApiKeys.includes(apiKey);
+        const isAPIKeyEnabled = isWildcardEnabled || (apiKey && allowedApiKeys.includes(apiKey));
         if (!isAPIKeyEnabled && !currentExcludedSources.includes(ERC20BridgeSource.LiquidityProvider)) {
             return currentExcludedSources.concat(ERC20BridgeSource.LiquidityProvider);
         }
@@ -173,13 +173,15 @@ export const serviceUtils = {
             ...Object.values(ERC20BridgeSource).map(s => ({ [s]: ZERO })),
         );
 
-        return Object.entries({ ...defaultSourceBreakdown, ...sourceBreakdown }).reduce((acc, [source, breakdown]) => {
+        return Object.entries({ ...defaultSourceBreakdown, ...sourceBreakdown }).reduce<
+            GetSwapQuoteResponseLiquiditySource[]
+        >((acc, [source, breakdown]) => {
             let obj;
             if (source === ERC20BridgeSource.MultiHop && !BigNumber.isBigNumber(breakdown)) {
                 obj = {
-                    ...breakdown,
+                    ...breakdown!,
                     name: ERC20BridgeSource.MultiHop,
-                    proportion: new BigNumber(breakdown.proportion.toPrecision(PERCENTAGE_SIG_DIGITS)),
+                    proportion: new BigNumber(breakdown!.proportion.toPrecision(PERCENTAGE_SIG_DIGITS)),
                 };
             } else {
                 obj = {
@@ -201,7 +203,7 @@ export const serviceUtils = {
                 gasTokenGasCost: ZERO,
             };
         }
-        const costOfBridgeFills = BigNumber.sum(...bridgeFills.map(o => GAS_SCHEDULE_V0[o.source](o.fillData)))
+        const costOfBridgeFills = BigNumber.sum(...bridgeFills.map(o => GAS_SCHEDULE_V0[o.source]!(o.fillData)))
             .plus(bridgeFills.length * SSTORE_COST)
             .plus(SSTORE_INIT_COST);
         const usedGasTokens = BigNumber.min(

@@ -234,7 +234,7 @@ export class MetaTransactionService {
 
         // log quote report and associate with txn hash if this is an RFQT firm quote
         const shouldLogQuoteReport = quoteReport && params.apiKey !== undefined;
-        if (shouldLogQuoteReport) {
+        if (quoteReport && shouldLogQuoteReport) {
             quoteReportUtils.logQuoteReport({ submissionBy: 'metaTxn', quoteReport, zeroExTransactionHash });
         }
 
