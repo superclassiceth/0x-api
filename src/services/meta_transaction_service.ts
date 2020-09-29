@@ -412,9 +412,9 @@ export class MetaTransactionService {
             });
             return false;
         }
-        const signerStatus: TransactionWatcherSignerStatus = JSON.parse(statusKV?.value);
+        const signerStatus: TransactionWatcherSignerStatus = JSON.parse(statusKV!.value!);
         const hasUpdatedRecently =
-            !utils.isNil(statusKV.updatedAt) && statusKV.updatedAt.getTime() > Date.now() - TEN_MINUTES_MS;
+            !utils.isNil(statusKV!.updatedAt) && statusKV!.updatedAt!.getTime() > Date.now() - TEN_MINUTES_MS;
         // tslint:disable-next-line:no-boolean-literal-compare
         return signerStatus.live === true && hasUpdatedRecently;
     }
@@ -422,8 +422,8 @@ export class MetaTransactionService {
         return utils.runWithTimeout(async () => {
             while (true) {
                 const tx = await this._transactionEntityRepository.findOne(txEntity.refHash);
-                if (!utils.isNil(tx) && !utils.isNil(tx.txHash) && !utils.isNil(tx.data)) {
-                    return { ethereumTransactionHash: tx.txHash };
+                if (!utils.isNil(tx) && !utils.isNil(tx!.txHash) && !utils.isNil(tx!.data)) {
+                    return { ethereumTransactionHash: tx!.txHash };
                 }
 
                 await utils.delayAsync(SUBMITTED_TX_DB_POLLING_INTERVAL_MS);
