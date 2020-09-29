@@ -79,7 +79,7 @@ export class SwapService {
         const swapQuoterOpts: Partial<SwapQuoterOpts> = {
             ...SWAP_QUOTER_OPTS,
             rfqt: {
-                ...SWAP_QUOTER_OPTS.rfqt,
+                ...SWAP_QUOTER_OPTS.rfqt!,
                 warningLogger: logger.warn.bind(logger),
                 infoLogger: logger.info.bind(logger),
             },
@@ -92,7 +92,7 @@ export class SwapService {
         this._contractAddresses = contractAddresses;
         this._wethContract = new WETH9Contract(this._contractAddresses.etherToken, this._provider);
         const gasTokenContract = new ERC20TokenContract(
-            getTokenMetadataIfExists('GST2', CHAIN_ID).tokenAddress,
+            getTokenMetadataIfExists('GST2', CHAIN_ID)!.tokenAddress,
             this._provider,
         );
         this._gstBalanceResultCache = createResultCache<BigNumber>(() =>
@@ -477,7 +477,9 @@ export class SwapService {
             }
         }
         try {
-            revertError = RevertError.decode(callResult, false);
+            if (callResult) {
+                revertError = RevertError.decode(callResult, false);
+            }
         } catch (e) {
             // No revert error
         }
@@ -505,7 +507,8 @@ export class SwapService {
             includePriceComparisons,
         } = params;
         let _rfqt: RfqtRequestOpts | undefined;
-        const isAllExcluded = Object.values(ERC20BridgeSource).every(s => excludedSources.includes(s));
+        const isAllExcluded =
+            excludedSources && Object.values(ERC20BridgeSource).every(s => excludedSources.includes(s));
         if (isAllExcluded) {
             throw new ValidationError([
                 {
@@ -554,7 +557,7 @@ export class SwapService {
             ...swapQuoteRequestOpts,
             bridgeSlippage: slippagePercentage,
             gasPrice: providedGasPrice,
-            excludedSources: swapQuoteRequestOpts.excludedSources.concat(...(excludedSources || [])),
+            excludedSources: swapQuoteRequestOpts.excludedSources?.concat(...(excludedSources || [])),
             includedSources,
             rfqt: _rfqt,
             shouldGenerateQuoteReport,
@@ -586,7 +589,7 @@ export class SwapService {
         isFromETH: boolean,
         isToETH: boolean,
         isMetaTransaction: boolean,
-        affiliateAddress: string,
+        affiliateAddress: string | undefined,
         swapVersion: SwapVersion,
         affiliateFee: AffiliateFee,
     ): Promise<SwapQuoteResponsePartialTransaction> {
@@ -623,7 +626,7 @@ export class SwapService {
     }
 
     private async _getSwapQuotePriceAsync(
-        buyAmount: BigNumber,
+        buyAmount: BigNumber | undefined,
         buyTokenAddress: string,
         sellTokenAddress: string,
         swapQuote: SwapQuote,
