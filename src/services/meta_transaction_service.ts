@@ -81,7 +81,7 @@ export class MetaTransactionService {
         const swapQuoterOpts: Partial<SwapQuoterOpts> = {
             ...SWAP_QUOTER_OPTS,
             rfqt: {
-                ...SWAP_QUOTER_OPTS.rfqt,
+                ...SWAP_QUOTER_OPTS.rfqt!,
                 warningLogger: logger.warn.bind(logger),
                 infoLogger: logger.info.bind(logger),
             },
@@ -406,13 +406,13 @@ export class MetaTransactionService {
     }
     public async isSignerLiveAsync(): Promise<boolean> {
         const statusKV = await this._kvRepository.findOne(SIGNER_STATUS_DB_KEY);
-        if (utils.isNil(statusKV) || utils.isNil(statusKV.value)) {
+        if (utils.isNil(statusKV) || utils.isNil(statusKV?.value)) {
             logger.error({
                 message: `signer status entry is not present in the database`,
             });
             return false;
         }
-        const signerStatus: TransactionWatcherSignerStatus = JSON.parse(statusKV.value);
+        const signerStatus: TransactionWatcherSignerStatus = JSON.parse(statusKV?.value);
         const hasUpdatedRecently =
             !utils.isNil(statusKV.updatedAt) && statusKV.updatedAt.getTime() > Date.now() - TEN_MINUTES_MS;
         // tslint:disable-next-line:no-boolean-literal-compare
