@@ -312,7 +312,7 @@ async function quoteAndExpectAsync(
 
 function expectCorrectQuote(quoteResponse: GetSwapQuoteResponse, quoteAssertions: Partial<QuoteAssertion>): void {
     for (const property of Object.keys(quoteAssertions)) {
-        expect(quoteResponse[property]).to.be.eql(quoteAssertions[property]);
+        expect((quoteResponse as any)[property]).to.be.eql((quoteAssertions as any)[property]);
     }
     // Only have 0x liquidity for now.
     expect(quoteResponse.sources).to.be.eql(liquiditySources0xOnly);

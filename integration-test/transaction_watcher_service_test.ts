@@ -97,7 +97,7 @@ describe('transaction watcher service', () => {
         const websocketOpts = { path: SRA_PATH };
         const swapService = createSwapServiceFromOrderBookService(orderBookService, provider, contractAddresses);
         const meshClient = new MeshClient(
-            defaultHttpServiceConfig.meshWebsocketUri,
+            defaultHttpServiceConfig.meshWebsocketUri!,
             defaultHttpServiceConfig.meshHttpUri,
         );
         const metricsService = new MetricsService();
